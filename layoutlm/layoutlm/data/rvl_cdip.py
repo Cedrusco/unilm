@@ -113,7 +113,7 @@ class CdipProcessor(DataProcessor):
         return text_buffer, bbox_buffer
 
     def get_labels(self):
-        return list(map(str, list(range(16))))
+        return list(map(str, list(range(100))))
 
     def _create_examples(self, lines, mode):
         """Creates examples for the training and dev sets."""
@@ -166,8 +166,8 @@ def convert_examples_to_features(
     pad_token_segment_id=0,
     mask_padding_with_zero=True,
 ):
-
-    label_map = {label: i for i, label in enumerate(label_list)}
+    print('############# label_list %s', label_list)
+    # label_map = {label: i for i, label in enumerate(label_list)}
 
     features = []
     for (ex_index, example) in enumerate(tqdm(examples)):
@@ -227,7 +227,10 @@ def convert_examples_to_features(
             len(token_type_ids) == max_length
         ), "Error with input length {} vs {}".format(len(token_type_ids), max_length)
 
-        label = label_map[example.label]
+        print('************ example.label %s ', example.label)
+        # label = label_map[example.label]
+        label = int(example.label)
+        print('label %d ', label)
 
         if ex_index < 5:
             logger.info("*** Example ***")
@@ -275,6 +278,7 @@ def load_and_cache_examples(args, tokenizer, mode="train"):
         logger.info("Creating features from dataset file at %s", args.data_dir)
         label_list = processor.get_labels()
         examples = processor.get_examples(args.data_dir, mode)
+        print('example %s ', examples)
         features = convert_examples_to_features(
             examples,
             tokenizer,
@@ -303,7 +307,9 @@ def load_and_cache_examples(args, tokenizer, mode="train"):
         [f.token_type_ids for f in features], dtype=torch.long
     )
 
+    
     all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
+    print('all_labels %s ', all_labels)
     dataset = TensorDataset(
         all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_bboxes
     )
