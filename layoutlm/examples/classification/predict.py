@@ -5,12 +5,12 @@ import torch
 from lxml import html
 from transformers import BertTokenizerFast
 
-from layoutlm import LayoutlmConfig, LayoutlmForSequenceClassification
+from layoutlm.modeling.layoutlm import LayoutlmConfig, LayoutlmForSequenceClassification
 from layoutlm.data.rvl_cdip import CdipProcessor, get_prop, DocExample, convert_examples_to_features
 
 
 # from rvl_cdip.py
-def convert_hocr_to_feature(hocr_file, tokenizer, label_list):
+def convert_hocr_to_feature(hocr_file, tokenizer, label_list, label):
     text_buffer = []
     bbox_buffer = []
     try:
@@ -37,7 +37,6 @@ def convert_hocr_to_feature(hocr_file, tokenizer, label_list):
                 bbox_buffer.append(bbox)
     # hocr file is now read, all relevant data is in text_buffer and bbox_buffer
     guid = "eval-0"
-    label = "0"
     # convert from hocr data to DocExample
     examples = [DocExample(guid=guid, text_a=text_buffer, text_b=None, bbox=bbox_buffer, label=label)]
     # convert from DocExample to list of DocFeature
@@ -45,7 +44,7 @@ def convert_hocr_to_feature(hocr_file, tokenizer, label_list):
     return features[0]
 
 
-def modelPredict(output_path, hocr_file):
+def make_prediction(output_path, hocr_file):
     # config, tokenizer, and model all loaded from output directory
     config = LayoutlmConfig.from_pretrained(output_path)
     tokenizer = BertTokenizerFast.from_pretrained(output_path)
@@ -53,8 +52,7 @@ def modelPredict(output_path, hocr_file):
 
     processor = CdipProcessor()
     label_list = processor.get_labels()
-    num_labels = len(label_list)
-    feature = convert_hocr_to_feature(hocr_file, tokenizer, label_list)
+    feature = convert_hocr_to_feature(hocr_file, tokenizer, label_list, "0")
 
     model.eval()
     with torch.no_grad():
@@ -74,9 +72,14 @@ def modelPredict(output_path, hocr_file):
                 max_prob = p
                 max_index = index
             index += 1
-    head, tail = os.path.split(hocr_file)
-    print(">>> Predicted label %s with %s confidence for input file %s" % (max_index, max_prob * 100, tail))
+        # returns index of label for now, we can likely reference label_list in the future to return label name???
+    return max_index, max_prob
 
 
 if __name__ == "__main__":
-    modelPredict(sys.argv[1], sys.argv[2])
+    label, confidence = make_prediction('/Users/chris/CODE/cedrus/unilm/layoutlm/examples/classification/aetna_dataset_output_base_40_d3',
+                    '/Users/chris/CODE/cedrus/unilm/layoutlm/layoutlm/data/Aetna Dataset -3/OCR/images/COB1/COB1-1.xml')
+    print('>>> Predicted label %s with %s%% confidence' % (label, confidence * 100))
+    #label, confidence = make_prediction(sys.argv[1], sys.argv[2])
+    #head, tail = os.path.split(sys.argv[2])
+    #print('>>> Predicted label %s with %s%% confidence for input file %s' % (label, confidence*100, tail))
