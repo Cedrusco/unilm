@@ -114,9 +114,9 @@ class CdipProcessor(DataProcessor):
         return text_buffer, bbox_buffer
 
     def get_labels(self):
-        range_num = max_label()
+        range_num = max_label() + 1
         print(f'max_labels {range_num}')
-        return list(map(str, list(range(range_num))))
+        return list(map(str, list(range(7))))
 
     def _create_examples(self, lines, mode):
         """Creates examples for the training and dev sets."""
