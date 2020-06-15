@@ -73,15 +73,16 @@ def do_training(base64_img, template_id):
         label = add_template_id(template_id)
     print(f'pretrained-model {pretrained_model_directory}')
     print(f'label {label}')
-    config = LayoutlmConfig.from_pretrained(MODEL_DIR)
+    config = LayoutlmConfig.from_pretrained(pretrained_model_directory)
     tokenizer = BertTokenizerFast.from_pretrained(pretrained_model_directory)
     model = LayoutlmForSequenceClassification.from_pretrained(pretrained_model_directory, config=config)
     processor = CdipProcessor()
     label_list = processor.get_labels()
     hocr_file = addData(template_id,base64_img)
     # todo: need to talk about how labels are defined and how we feed them in with the 2 different cases (label exists/not)
+    print(f'before feature')
     feature = convert_hocr_to_feature(hocr_file, tokenizer, label_list, label)
-
+    print(f'after feature')
     # from run_classification.py, some parameters are filled in with default value according to training_args.py
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
@@ -108,7 +109,7 @@ def do_training(base64_img, template_id):
     scheduler = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=0, num_training_steps=40
     )
-    epoch_count = 20
+    epoch_count = 40
     model.zero_grad()
     # todo: discuss assumptions made on hardware, CPU/GPU
     # todo: discuss training method, just new file? add new file to random sampled data? how do we mitigate overfitting to new input
