@@ -71,10 +71,11 @@ def do_training(base64_img, template_id):
     else:
         pretrained_model_directory ='models/layoutlm-base-uncased'
         label = add_template_id(template_id)
-        
+    print(f'pretrained-model {pretrained_model_directory}')
+    print(f'label {label}')
     config = LayoutlmConfig.from_pretrained(MODEL_DIR)
-    tokenizer = BertTokenizerFast.from_pretrained(MODEL_DIR)
-    model = LayoutlmForSequenceClassification.from_pretrained(MODEL_DIR, config=config)
+    tokenizer = BertTokenizerFast.from_pretrained(pretrained_model_directory)
+    model = LayoutlmForSequenceClassification.from_pretrained(pretrained_model_directory, config=config)
     processor = CdipProcessor()
     label_list = processor.get_labels()
     hocr_file = addData(template_id,base64_img)
