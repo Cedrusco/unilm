@@ -21,7 +21,7 @@ def predict(base64_img, num_matches):
     with open(img, 'wb') as file_to_save:
         decoded_image_data = base64.b64decode(base64_img, '-_')
         file_to_save.write(decoded_image_data)
-    convert_img_to_xml(img, OUTPUT_DIR)
+    convert_img_to_xml(img, OUTPUT_DIR, filename)
     hocr = os.path.join(OUTPUT_DIR, filename + '.xml')
     matches = make_prediction(MODEL_DIR, hocr, num_matches)
     match_array = []
