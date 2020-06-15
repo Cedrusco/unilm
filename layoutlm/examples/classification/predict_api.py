@@ -1,4 +1,4 @@
-import os, uuid, pathlib, base64
+import os, uuid, pathlib, base64, json
 import sys
 ROOT_DIR = os.path.abspath("../../../")
 sys.path.append(ROOT_DIR)
@@ -10,7 +10,7 @@ MODEL_DIR = 'aetna-trained-model'
 OUTPUT_DIR = 'output'
 
 
-def predict(base64_img):
+def predict(base64_img, num_matches):
     try:
         os.mkdir(OUTPUT_DIR)
     except:
@@ -23,13 +23,19 @@ def predict(base64_img):
         file_to_save.write(decoded_image_data)
     convert_img_to_xml(img, OUTPUT_DIR)
     hocr = os.path.join(OUTPUT_DIR, filename + '.xml')
-    label, confidence = make_prediction(MODEL_DIR, hocr)
+    matches = make_prediction(MODEL_DIR, hocr, num_matches)
+    match_array = []
+    for rank, label, prob in matches:
+        match = {
+            'rank': rank,
+            'label': label,
+            'confidence': prob
+        }
+        match_array.append(match)
     response = {
-        'label': label,
-        'confidence': confidence
+        'matches': match_array,
     }
     return response
 
 if __name__ == "__main__":
-    # cob-1-1.png
-    predict('')
+    predict('', 1)
