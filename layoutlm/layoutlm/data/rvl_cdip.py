@@ -113,7 +113,7 @@ class CdipProcessor(DataProcessor):
         return text_buffer, bbox_buffer
 
     def get_labels(self):
-        return list(map(str, list(range(100))))
+        return list(map(str, list(range(2))))
 
     def _create_examples(self, lines, mode):
         """Creates examples for the training and dev sets."""
