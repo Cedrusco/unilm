@@ -52,8 +52,8 @@ def make_prediction(output_path, hocr_file):
 
     processor = CdipProcessor()
     label_list = processor.get_labels()
+    print('label_list %s ', label_list)
     feature = convert_hocr_to_feature(hocr_file, tokenizer, label_list, "0")
-
     model.eval()
     with torch.no_grad():
         inputs = {
@@ -64,10 +64,22 @@ def make_prediction(output_path, hocr_file):
             "bbox": torch.tensor([feature.bboxes])
         }
         outputs = model(**inputs)
+        # _, predicted = torch.max(outputs, 1)
+        # print('predicted ', predicted)
+        print('outputs ', outputs) 
+        tmp_eval_loss, logits = outputs[:2]
+        print("tmp_eval_loss, logits ", tmp_eval_loss, logits)
+        preds = logits.detach().cpu().numpy()
+        out_label_ids = inputs["labels"].detach().cpu().numpy()
+        print("out_label_ids ", out_label_ids)
+        # eval_loss += tmp_eval_loss.mean().item()
+        # print("eval_loss ",eval_loss)
         sm = torch.nn.Softmax()
         probabilities = sm(outputs[1]).tolist()[0]
+        print("probabilities asf", probabilities)
         max_prob, max_index, index = 0, 0, 0
         for p in probabilities:
+            print('p  %s', p)
             if p > max_prob:
                 max_prob = p
                 max_index = index
