@@ -44,7 +44,7 @@ def convert_hocr_to_feature(hocr_file, tokenizer, label_list, label):
     return features[0]
 
 
-def make_prediction(output_path, hocr_file):
+def make_prediction(output_path, hocr_file, num_matches):
     # config, tokenizer, and model all loaded from output directory
     config = LayoutlmConfig.from_pretrained(output_path)
     tokenizer = BertTokenizerFast.from_pretrained(output_path)
@@ -76,22 +76,31 @@ def make_prediction(output_path, hocr_file):
         # print("eval_loss ",eval_loss)
         sm = torch.nn.Softmax()
         probabilities = sm(outputs[1]).tolist()[0]
+        prob_dict = {}
+        matches = []
+        for index, prob in enumerate(probabilities):
+            prob_dict[index] = prob
+        rank = 1
+        while num_matches > 0:
+            if not prob_dict:
+                break
+            max_key = max(prob_dict, key=lambda k: prob_dict[k])
+            entry = (rank, max_key, prob_dict[max_key])
+            matches.append(entry)
+            rank += 1
+            num_matches -= 1
+            prob_dict.pop(max_key)
+        matches.sort(key=lambda x: x[0])
         print("probabilities asf", probabilities)
-        max_prob, max_index, index = 0, 0, 0
-        for p in probabilities:
-            print('p  %s', p)
-            if p > max_prob:
-                max_prob = p
-                max_index = index
-            index += 1
         # returns index of label for now, we can likely reference label_list in the future to return label name???
-    return max_index, max_prob
+    return matches
 
 
 if __name__ == "__main__":
-    label, confidence = make_prediction('/Users/chris/CODE/cedrus/unilm/layoutlm/examples/classification/aetna_dataset_output_base_40_d3',
-                    '/Users/chris/CODE/cedrus/unilm/layoutlm/layoutlm/data/Aetna Dataset -3/OCR/images/COB1/COB1-1.xml')
-    print('>>> Predicted label %s with %s%% confidence' % (label, confidence * 100))
+    matches = make_prediction('/Users/chris/CODE/cedrus/unilm/layoutlm/examples/classification/aetna_dataset_output_base_40_d3',
+                    '/Users/chris/CODE/cedrus/unilm/layoutlm/layoutlm/data/Aetna Dataset -3/OCR/images/COB1/COB1-1.xml', 100)
+    print(matches)
+    #print('>>> Predicted label %s with %s%% confidence' % (label, confidence * 100))
     #label, confidence = make_prediction(sys.argv[1], sys.argv[2])
     #head, tail = os.path.split(sys.argv[2])
     #print('>>> Predicted label %s with %s%% confidence for input file %s' % (label, confidence*100, tail))

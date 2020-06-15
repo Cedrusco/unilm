@@ -12,7 +12,8 @@ app = Flask(__name__)
 def predict_label():
     if not request.json or not 'img' in request.json:
         abort(400)
-    response = predict(request.json['img'])
+    matches = request.json['numMatches'] if 'numMatches' in request.json else 1
+    response = predict(request.json['img'], matches)
     return jsonify(response), 201
 @app.route('/train', methods=['POST'])
 def train_label():
