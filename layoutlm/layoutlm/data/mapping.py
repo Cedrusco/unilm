@@ -1,6 +1,6 @@
 
 import pandas as pd
-mapping_df = pd.read_csv('mapping.csv')
+mapping_df = pd.read_csv('../../examples/classification/mapping.csv')
 
 
 def get_label(template_id):

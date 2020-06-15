@@ -11,6 +11,7 @@ from lxml import html
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
 from transformers import DataProcessor
+from mapping import max_label
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,9 @@ class CdipProcessor(DataProcessor):
         return text_buffer, bbox_buffer
 
     def get_labels(self):
-        return list(map(str, list(range(100))))
+        range_num = max_label()
+        print(f'max_labels {range_num}')
+        return list(map(str, list(range(range_num))))
 
     def _create_examples(self, lines, mode):
         """Creates examples for the training and dev sets."""
