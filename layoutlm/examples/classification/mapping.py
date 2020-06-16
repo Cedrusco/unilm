@@ -29,4 +29,4 @@ def max_label():
 
 
 if __name__ == "__main__":
-    add_template_id('temp_2')
+    get_label('COB_B')
