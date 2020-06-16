@@ -46,7 +46,30 @@ def add_trainining_label(filepath, template_id):
         file_object.write('\n')
         file_object.write(f'{filepath} {label}')
 
+
+def update_version(id_exists):
+    f = open("data/labels/version.txt", "r")
+    text=f.read()
+    version=text.split()
+    model_version, sub_model_version =  version[1].split('.')
+    if (id_exists):
+        new_sub_model_version= int(sub_model_version) + 1
+        new_version= f'{model_version}.{new_sub_model_version}'
+        text= f'version {new_version}'
+        f = open("data/labels/version.txt", "w")
+        f.write(text)
+        return new_version
+    else:
+        new_model_version= int(model_version) + 1
+        new_version = f'{new_model_version}.0'
+        text= f'version {new_version}'
+        f = open("data/labels/version.txt", "w")
+        f.write(text)
+        return new_version
+
 def do_training(base64_img, template_id):
+    template_exists = check_if_exists(template_id)
+    update_version(template_exists)
     if  (check_if_exists(template_id)):
         print('do_training exists ', template_id)
         label=get_label(template_id)
@@ -109,6 +132,7 @@ def cont_train(base64_img, template_id, label):
         scheduler.step()
     print('save model')
     save_model(model, tokenizer, MODEL_DIR)
+    
     return { "trained_model_name": MODEL_DIR}
 
 def save_model(model, tokenizer, output_dir):
@@ -159,4 +183,6 @@ def do_retrain(base64_img, template_id, label):
 
 if __name__ == "__main__":
     do_retrain("image", "label", "label")
+    # update_version(True)
+
     
