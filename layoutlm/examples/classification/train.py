@@ -47,6 +47,7 @@ def add_trainining_label(filepath, template_id):
         file_object.write(f'{filepath} {label}')
 
 def do_training(base64_img, template_id):
+    subprocess.Popen("cd ../../; python setup.py install", shell=True ).wait()
     if  (check_if_exists(template_id)):
         print('do_training exists ', template_id)
         label=get_label(template_id)
@@ -159,4 +160,3 @@ def do_retrain(base64_img, template_id, label):
 
 if __name__ == "__main__":
     do_retrain("image", "label", "label")
-    
