@@ -9,6 +9,13 @@ def get_label(template_id):
     print("get_label ", label)
     return label
 
+def get_template_id(label):
+    row = mapping_df[mapping_df["label"] == label] 
+    print(row)
+    template_id = row["template_id"].values[0]
+    print("get_template_id ", template_id)
+    return template_id
+
 def check_if_exists(template_id):
     template_ids = mapping_df["template_id"].values
     exists = template_id in template_ids
@@ -29,4 +36,4 @@ def max_label():
 
 
 if __name__ == "__main__":
-    get_label('COB_B')
+    get_template_id(0)

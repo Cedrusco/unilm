@@ -132,7 +132,6 @@ def cont_train(base64_img, template_id, label):
         scheduler.step()
     print('save model')
     save_model(model, tokenizer, MODEL_DIR)
-    
     return { "trained_model_name": MODEL_DIR}
 
 def save_model(model, tokenizer, output_dir):
