@@ -31,6 +31,6 @@ def train_label():
 
 if __name__ == '__main__':
     # # debug mode
-    # app.run(host='0.0.0.0', debug=True, port=6060)
+    app.run(host='0.0.0.0', debug=True, port=6060)
     # production mode
-    serve(app, port=6060)
+    # serve(app, port=6060)
