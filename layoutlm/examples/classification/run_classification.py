@@ -346,21 +346,21 @@ def main():
     ## Required parameters
     parser.add_argument(
         "--data_dir",
-        default=None,
+        default="data",
         type=str,
         required=True,
         help="The input data dir. Should contain the .tsv files (or other data files) for the task.",
     )
     parser.add_argument(
         "--model_type",
-        default=None,
+        default="layoutlm",
         type=str,
         required=True,
         help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()),
     )
     parser.add_argument(
         "--model_name_or_path",
-        default=None,
+        default="models/layoutlm-base-uncased",
         type=str,
         required=True,
         help="Path to pre-trained model or shortcut name selected in the list: "
