@@ -70,7 +70,7 @@ def update_version(id_exists):
 def do_training(base64_img, template_id):
     template_exists = check_if_exists(template_id)
     update_version(template_exists)
-    if  (check_if_exists(template_id)):
+    if  (template_exists):
         print('do_training exists ', template_id)
         label=get_label(template_id)
         return cont_train(base64_img,template_id,label)
