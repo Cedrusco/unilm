@@ -4,14 +4,15 @@ ROOT_DIR = os.path.abspath("../../../")
 sys.path.append(ROOT_DIR)
 from layoutlm.data.convert import convert_img_to_xml
 from examples.classification.predict import make_prediction
-from mapping import  get_template_id
+from layoutlm.data.mapping import get_template_id
+from layoutlm.data.data_adapter import adapt_data
 
 # assumes model exists and is in same directory as this file
 MODEL_DIR = 'aetna-trained-model'
 OUTPUT_DIR = 'output'
 
 
-def predict(base64_img, num_matches):
+def predict(base64_img, num_matches, data_path):
     try:
         os.mkdir(OUTPUT_DIR)
     except:
@@ -26,7 +27,9 @@ def predict(base64_img, num_matches):
     hocr = os.path.join(OUTPUT_DIR, filename + '.xml')
     matches = make_prediction(MODEL_DIR, hocr, num_matches)
     match_array = []
-    f = open("data/labels/version.txt", "r")
+    data_path = adapt_data(data_path)
+    version_path = os.path.join(data_path, "labels/version.txt")
+    f = open(version_path, "r")
     text=f.read()
     version=text.split()
 
@@ -45,4 +48,4 @@ def predict(base64_img, num_matches):
     return response
 
 if __name__ == "__main__":
-    predict('', 1)
+    predict('', 1, "data")

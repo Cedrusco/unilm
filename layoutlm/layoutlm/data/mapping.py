@@ -1,6 +1,6 @@
 
 import pandas as pd
-mapping_df = pd.read_csv('../../examples/classification/mapping.csv')
+mapping_df = pd.read_csv('mapping.csv')
 
 
 def get_label(template_id):
@@ -8,6 +8,13 @@ def get_label(template_id):
     label = row["label"].values[0]
     print("get_label ", label)
     return label
+
+def get_template_id(label):
+    row = mapping_df[mapping_df["label"] == label] 
+    print(row)
+    template_id = row["template_id"].values[0]
+    print("get_template_id ", template_id)
+    return template_id
 
 def check_if_exists(template_id):
     template_ids = mapping_df["template_id"].values
@@ -29,4 +36,4 @@ def max_label():
 
 
 if __name__ == "__main__":
-    add_template_id('temp_2')
+    get_template_id(0)

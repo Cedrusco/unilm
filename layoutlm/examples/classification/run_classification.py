@@ -73,8 +73,8 @@ def train(args, train_dataset, model, tokenizer):  # noqa C901
         if args.local_rank == -1
         else DistributedSampler(train_dataset)
     )
-    train_dataloader = DataLoader(
-        train_dataset, sampler=train_sampler, batch_size=args.train_batch_size
+    train_dataloader = DataLoader(          
+        train_dataset, sampler=train_sampler, batch_size=args.train_batch_size          #dataloader takes the dataset here
     )
 
     if args.max_steps > 0:

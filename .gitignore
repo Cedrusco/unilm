@@ -102,3 +102,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+layoutlm/examples/classification/data
+layoutlm/examples/seq_labeling/data
+layoutlm/examples/seq_labeling/layoutlm-base-uncased

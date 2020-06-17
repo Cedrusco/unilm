@@ -11,7 +11,8 @@ from lxml import html
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
 from transformers import DataProcessor
-from mapping import max_label
+from .mapping import max_label
+from .data_adapter import adapt_data
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,7 @@ class CdipProcessor(DataProcessor):
             for example in p.imap(self.worker, lines):
                 examples.append(example)
                 t.update()
+        print ("examples in get_examples: ", examples)
         return self._create_examples(examples, mode)
 
     def _get_examples(self, data_dir, mode):
@@ -264,10 +266,14 @@ def load_and_cache_examples(args, tokenizer, mode="train"):
     if args.local_rank not in [-1, 0] and mode == "train":
         torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
 
+    # Adapt the data directory
+    new_data_dir = adapt_data(args.data_dir)
     processor = CdipProcessor()
     # Load data features from cache or dataset file
+
+    # Might need to change this to create a new directory for cached files
     cached_features_file = os.path.join(
-        args.data_dir,
+        new_data_dir,              #data_dir is the directory of the dataset, we need the data_dir to save the cached files
         "cached_{}_{}_{}".format(
             mode,
             list(filter(None, args.model_name_or_path.split("/"))).pop(),
@@ -278,9 +284,9 @@ def load_and_cache_examples(args, tokenizer, mode="train"):
         logger.info("Loading features from cached file %s", cached_features_file)
         features = torch.load(cached_features_file)
     else:
-        logger.info("Creating features from dataset file at %s", args.data_dir)
+        logger.info("Creating features from dataset file at %s", new_data_dir)
         label_list = processor.get_labels()
-        examples = processor.get_examples(args.data_dir, mode)
+        examples = processor.get_examples(new_data_dir, mode)
         print('example %s ', examples)
         features = convert_examples_to_features(
             examples,

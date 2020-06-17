@@ -6,7 +6,8 @@ from layoutlm.data.convert import convert_img_to_xml
 from layoutlm.modeling.layoutlm import LayoutlmConfig, LayoutlmForSequenceClassification
 from layoutlm.data.rvl_cdip import CdipProcessor, get_prop, DocExample, convert_examples_to_features
 from transformers import BertTokenizerFast, AdamW, get_linear_schedule_with_warmup
-from mapping import get_label, check_if_exists, max_label, add_template_id
+from layoutlm.data.mapping import get_label, check_if_exists, max_label, add_template_id
+from layoutlm.data.data_adapter import adapt_data
 logger = logging.getLogger(__name__)
 MODEL_DIR = 'aetna-trained-model'
 BASE_MODEL_DIR = 'models/layoutlm-base-uncased'
@@ -14,9 +15,16 @@ TIFF_DIR = 'data/tiffs'
 XML_DIR= 'data/images'
 LABEL_DIR= 'data/labels'
 import subprocess
+import re 
 
- 
-def addData(template_id,base64_img):
+def set_new_dirs(new_path):
+    global TIFF_DIR, XML_DIR, LABEL_DIR
+    TIFF_DIR = os.path.join(new_path, 'tiffs')
+    XML_DIR = os.path.join(new_path, 'images')
+    LABEL_DIR = os.path.join(new_path, 'labels')
+
+def addData(template_id,base64_img, path):
+    set_new_dirs(path)
     xml_path= os.path.join(XML_DIR,template_id)
     img_path= os.path.join(TIFF_DIR,template_id)
     filename = uuid.uuid4().hex
@@ -67,25 +75,30 @@ def update_version(id_exists):
         f.write(text)
         return new_version
 
-def do_training(base64_img, template_id):
+def do_training(base64_img, template_id, data_path):
     template_exists = check_if_exists(template_id)
+    path = adapt_data(data_path)
+    if type(path) is dict:
+        # returning an error
+        print(path.get("error"))
+        return path
     update_version(template_exists)
     if  (template_exists):
         print('do_training exists ', template_id)
         label=get_label(template_id)
-        return cont_train(base64_img,template_id,label)
+        return cont_train(base64_img,template_id,label, path)
     else:
         label = add_template_id(template_id)
         print('do_training does not exists ', template_id)
-        do_retrain(base64_img,template_id,label)
+        do_retrain(base64_img,template_id,label, path)
 
-def cont_train(base64_img, template_id, label):
+def cont_train(base64_img, template_id, label, path):
     config = LayoutlmConfig.from_pretrained(MODEL_DIR)
     tokenizer = BertTokenizerFast.from_pretrained(MODEL_DIR)
     model = LayoutlmForSequenceClassification.from_pretrained(MODEL_DIR, config=config)
     processor = CdipProcessor()
     label_list = processor.get_labels()
-    hocr_file = addData(template_id,base64_img)
+    hocr_file = addData(template_id,base64_img, path)
     feature = convert_hocr_to_feature(hocr_file, tokenizer, label_list, label)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
@@ -160,16 +173,17 @@ def save_model(model, tokenizer, output_dir):
     )
     model.to('cpu')
 
-def do_retrain(base64_img, template_id, label):
-    addData(template_id, base64_img)
+def do_retrain(base64_img, template_id, label, path):
+    print("retrain")
+    addData(template_id, base64_img, path)
     time.sleep(10)
-    subprocess.Popen("python run_classification.py  --data_dir data \
+    subprocess.Popen("python run_classification.py  --data_dir " + path + " \
                               --model_type layoutlm \
                               --model_name_or_path models/layoutlm-base-uncased \
                               --output_dir aetna-trained-model \
                               --do_lower_case \
                               --max_seq_length 512 \
-			      --do_train \
+			                  --do_train \
                               --do_eval \
                               --do_test \
                               --num_train_epochs 1.0 \
@@ -177,11 +191,11 @@ def do_retrain(base64_img, template_id, label):
                               --save_steps 5000 \
                               --per_gpu_train_batch_size 16 \
                               --per_gpu_eval_batch_size 16 \
-			      --overwrite_output_dir", shell=True)       
+			                  --overwrite_output_dir", shell=True)       
                               
 
 if __name__ == "__main__":
-    do_retrain("image", "label", "label")
+    do_retrain("image", "label", "label", "data")
     # update_version(True)
 
     
