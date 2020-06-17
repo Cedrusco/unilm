@@ -173,7 +173,7 @@ def do_retrain(base64_img, template_id, label):
 			      --do_train \
                               --do_eval \
                               --do_test \
-                              --num_train_epochs 1.0 \
+                              --num_train_epochs 40.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
                               --per_gpu_train_batch_size 16 \
