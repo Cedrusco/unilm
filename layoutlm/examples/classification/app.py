@@ -21,6 +21,8 @@ def predict_label():
     return jsonify(response), 201
 @app.route('/train', methods=['POST'])
 def train_label():
+    if 'testing' in request.json and request.json.get("testing") == True:
+        return "Reached Endpoint!", 200
     if not request.json or not 'img' in request.json or not 'template_id' in request.json:
         abort(400)  
     body_img = request.json.get("img")
