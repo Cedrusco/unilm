@@ -171,13 +171,11 @@ def do_retrain(base64_img, template_id, label):
                               --do_lower_case \
                               --max_seq_length 512 \
 			      --do_train \
-                              --do_eval \
-                              --do_test \
                               --num_train_epochs 40.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
-                              --per_gpu_train_batch_size 16 \
-                              --per_gpu_eval_batch_size 16 \
+                              --per_gpu_train_batch_size 1 \
+                              --per_gpu_eval_batch_size 1 \
 			      --overwrite_output_dir", shell=True)       
                               
 

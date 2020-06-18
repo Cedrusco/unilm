@@ -22,9 +22,11 @@ def predict_label():
 @app.route('/train', methods=['POST'])
 def train_label():
     if not request.json or not 'img' in request.json or not 'template_id' in request.json:
-        abort(400)
+        abort(400)  
     body_img = request.json.get("img")
     body_template_id = request.json.get("template_id")
+    if not body_img or not body_template_id or body_img.isspace() or body_template_id.isspace():
+        abort(400)
     task_training = Process(target=do_training, args=( body_img, body_template_id))
     task_training.start()
     return "Training in process!", 202
