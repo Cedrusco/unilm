@@ -12,7 +12,7 @@ from torch.utils.data import TensorDataset
 from tqdm import tqdm
 from transformers import DataProcessor
 from .mapping import max_label
-from .data_adapter import adapt_data
+from .data_adapter import DataAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,8 @@ class CdipProcessor(DataProcessor):
         with open(os.path.join(data_dir, "labels", "{}.txt".format(mode))) as f:
             lines = f.readlines()
         examples = []
+        print("~~~~lines: ", lines)
+        print("worker: ", self.worker)
         with tqdm(lines, desc="Gettting {} examples".format(mode)) as t, Pool(24) as p:
             for example in p.imap(self.worker, lines):
                 examples.append(example)
@@ -267,13 +269,14 @@ def load_and_cache_examples(args, tokenizer, mode="train"):
         torch.distributed.barrier()  # Make sure only the first process in distributed training process the dataset, and the others will use the cache
 
     # Adapt the data directory
-    new_data_dir = adapt_data(args.data_dir)
+    data_dir = DataAdapter().data_dir
+    print("data_dir inside load and cache: ", data_dir)
     processor = CdipProcessor()
     # Load data features from cache or dataset file
 
     # Might need to change this to create a new directory for cached files
     cached_features_file = os.path.join(
-        new_data_dir,              #data_dir is the directory of the dataset, we need the data_dir to save the cached files
+        data_dir,              #data_dir is the directory of the dataset, we need the data_dir to save the cached files
         "cached_{}_{}_{}".format(
             mode,
             list(filter(None, args.model_name_or_path.split("/"))).pop(),
@@ -284,9 +287,9 @@ def load_and_cache_examples(args, tokenizer, mode="train"):
         logger.info("Loading features from cached file %s", cached_features_file)
         features = torch.load(cached_features_file)
     else:
-        logger.info("Creating features from dataset file at %s", new_data_dir)
+        logger.info("Creating features from dataset file at %s", data_dir)
         label_list = processor.get_labels()
-        examples = processor.get_examples(new_data_dir, mode)
+        examples = processor.get_examples(data_dir, mode)
         print('example %s ', examples)
         features = convert_examples_to_features(
             examples,
@@ -332,7 +335,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
     args.local_rank = -1
-    args.data_dir = "data"
+    args.data_dir = DataAdapter().data_dir
     args.model_name_or_path = "bert-base-uncased"
     args.max_seq_length = 512
     args.model_type = "bert"

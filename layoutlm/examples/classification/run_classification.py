@@ -27,6 +27,8 @@ from transformers import (
 from layoutlm import LayoutlmConfig, LayoutlmForSequenceClassification
 from layoutlm.data.rvl_cdip import CdipProcessor, load_and_cache_examples
 
+from layoutlm.data.data_adapter import DataAdapter
+
 try:
     from torch.utils.tensorboard import SummaryWriter
 except:
@@ -344,13 +346,13 @@ def main():
     parser = argparse.ArgumentParser()
 
     ## Required parameters
-    parser.add_argument(
-        "--data_dir",
-        default="data",
-        type=str,
-        required=True,
-        help="The input data dir. Should contain the .tsv files (or other data files) for the task.",
-    )
+    # parser.add_argument(
+    #     "--data_dir",
+    #     default=DataAdapter().data_dir,
+    #     type=str,
+    #     required=False,
+    #     help="The input data dir. Should contain the .tsv files (or other data files) for the task.",
+    # )
     parser.add_argument(
         "--model_type",
         default="layoutlm",

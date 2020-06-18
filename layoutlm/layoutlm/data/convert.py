@@ -26,6 +26,7 @@ def convert_img_to_xml(img, output_dir, filename):
     # img_path, img_file = os.path.split(img)
     # output_file = os.path.join(output_dir, os.path.splitext(img_file)[0])
     output_file = os.path.join(output_dir, filename)
+    print("output_file: ", output_file)
     subprocess.run(['tesseract', img, output_file, 'hocr']) # make call to Tesseract with img file and output dir
     old_file_path = output_file + '.hocr'
     new_file_path = output_file + '.xml'

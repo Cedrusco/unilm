@@ -17,8 +17,7 @@ def predict_label():
     if not request.json or not 'img' in request.json:
         abort(400)
     matches = request.json['numMatches'] if 'numMatches' in request.json else 1
-    body_data_path = request.json.get("data_path")
-    response = predict(request.json['img'], matches, body_data_path)
+    response = predict(request.json['img'], matches)
     return jsonify(response), 201
 @app.route('/train', methods=['POST'])
 def train_label():
@@ -26,8 +25,7 @@ def train_label():
         abort(400)
     body_img = request.json.get("img")
     body_template_id = request.json.get("template_id")
-    body_data_path = request.json.get("data_path")
-    task_training = Process(target=do_training, args=( body_img, body_template_id, body_data_path))
+    task_training = Process(target=do_training, args=( body_img, body_template_id))
     task_training.start()
     return "Training in process!", 202
 
