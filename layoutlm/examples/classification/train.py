@@ -1,59 +1,93 @@
-import os, uuid, base64, torch, json
+import os, uuid, base64, torch, sys
+import time
 import logging
 from examples.classification.predict import convert_hocr_to_feature
 from layoutlm.data.convert import convert_img_to_xml
 from layoutlm.modeling.layoutlm import LayoutlmConfig, LayoutlmForSequenceClassification
 from layoutlm.data.rvl_cdip import CdipProcessor, get_prop, DocExample, convert_examples_to_features
 from transformers import BertTokenizerFast, AdamW, get_linear_schedule_with_warmup
+from mapping import get_label, check_if_exists, max_label, add_template_id
 logger = logging.getLogger(__name__)
 MODEL_DIR = 'aetna-trained-model'
-CONFIG = 'config.json'
-OUTPUT_DIR = 'output'
+BASE_MODEL_DIR = 'models/layoutlm-base-uncased'
+TIFF_DIR = 'data/tiffs'
+XML_DIR= 'data/images'
+LABEL_DIR= 'data/labels'
+import subprocess
 
-
-def prepare_image(base64_img):
-    # returns path of converted hocr file
+ 
+def addData(template_id,base64_img):
+    xml_path= os.path.join(XML_DIR,template_id)
+    img_path= os.path.join(TIFF_DIR,template_id)
+    filename = uuid.uuid4().hex
     try:
-        os.mkdir(OUTPUT_DIR)
+        os.mkdir(img_path)
     except:
         pass
-    filename = uuid.uuid4().hex
-    # assumes that base64_img encodes a .tiff file
-    img = os.path.join(OUTPUT_DIR, filename + '.tiff')
+    try:
+        os.mkdir(xml_path)
+    except:
+        pass
+    img= os.path.join(TIFF_DIR,template_id,f'{filename}.tiff')
     with open(img, 'wb') as file_to_save:
         decoded_image_data = base64.b64decode(base64_img, '-_')
         file_to_save.write(decoded_image_data)
-    convert_img_to_xml(img, OUTPUT_DIR)
-    return os.path.join(OUTPUT_DIR, filename + '.xml')
+    convert_img_to_xml(img, xml_path, filename)
+    xml_file=os.path.join(xml_path,f'{filename}.xml')
+    print(f'xml file {xml_file}')
+    add_trainining_label(f'{template_id}/{filename}.xml',template_id)
+    return xml_file
+
+def add_trainining_label(filepath, template_id):
+    training_labels_file= os.path.join(LABEL_DIR,'train.txt')
+    label=get_label(template_id)
+
+    with open(training_labels_file, 'a+') as file_object:
+        file_object.write('\n')
+        file_object.write(f'{filepath} {label}')
 
 
-def do_training(base64_img, label):
-    # open config file and add new label if necessary
-    config_path = os.path.join(MODEL_DIR, CONFIG)
-    config_file = open(config_path, 'r+')
-    config_data = json.load(config_file)
-    label_to_id = config_data['label2id']
-    id_to_label = config_data['id2label']
-    label_id = ''
-    if label not in label_to_id:
-        label_id = str(len(label_to_id))
-        label_to_id[label] = int(label_id)
-        id_to_label[label_id] = label
-        os.remove(config_path)
-        with open(config_path, "w", encoding="utf-8") as writer:
-            writer.write(json.dumps(config_data, indent=2, sort_keys=True) + "\n")
+def update_version(id_exists):
+    f = open("data/labels/version.txt", "r")
+    text=f.read()
+    version=text.split()
+    model_version, sub_model_version =  version[1].split('.')
+    if (id_exists):
+        new_sub_model_version= int(sub_model_version) + 1
+        new_version= f'{model_version}.{new_sub_model_version}'
+        text= f'version {new_version}'
+        f = open("data/labels/version.txt", "w")
+        f.write(text)
+        return new_version
     else:
-        label_id = str(label_to_id[label])
-    label_id_list = [id for id in id_to_label]
+        new_model_version= int(model_version) + 1
+        new_version = f'{new_model_version}.0'
+        text= f'version {new_version}'
+        f = open("data/labels/version.txt", "w")
+        f.write(text)
+        return new_version
 
+def do_training(base64_img, template_id):
+    subprocess.Popen("cd ../../; python setup.py install", shell=True ).wait()
+    template_exists = check_if_exists(template_id)
+    update_version(template_exists)
+    if  (template_exists):
+        print('do_training exists ', template_id)
+        label=get_label(template_id)
+        return cont_train(base64_img,template_id,label)
+    else:
+        label = add_template_id(template_id)
+        print('do_training does not exists ', template_id)
+        do_retrain(base64_img,template_id,label)
+
+def cont_train(base64_img, template_id, label):
     config = LayoutlmConfig.from_pretrained(MODEL_DIR)
     tokenizer = BertTokenizerFast.from_pretrained(MODEL_DIR)
     model = LayoutlmForSequenceClassification.from_pretrained(MODEL_DIR, config=config)
-    # need to find a way to leverage pretrained model with this new config, right now we get shape mismatch errors
-    hocr_file = prepare_image(base64_img)
-    feature = convert_hocr_to_feature(hocr_file, tokenizer, label_id_list, label_id)
-
-    # from run_classification.py, some parameters are filled in with default value according to training_args.py
+    processor = CdipProcessor()
+    label_list = processor.get_labels()
+    hocr_file = addData(template_id,base64_img)
+    feature = convert_hocr_to_feature(hocr_file, tokenizer, label_list, label)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
         {
@@ -77,11 +111,9 @@ def do_training(base64_img, label):
         optimizer_grouped_parameters, lr=5e-5, eps=1e-8
     )
     scheduler = get_linear_schedule_with_warmup(
-        optimizer, num_warmup_steps=0, num_training_steps=20
+        optimizer, num_warmup_steps=0, num_training_steps=40
     )
-
-
-    epoch_count = 20
+    epoch_count = 40
     model.zero_grad()
 
     for _ in range(epoch_count):
@@ -99,9 +131,9 @@ def do_training(base64_img, label):
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         scheduler.step()
+    print('save model')
     save_model(model, tokenizer, MODEL_DIR)
     return { "trained_model_name": MODEL_DIR}
-
 
 def save_model(model, tokenizer, output_dir):
     output_dir = os.path.join(output_dir)
@@ -129,5 +161,26 @@ def save_model(model, tokenizer, output_dir):
     )
     model.to('cpu')
 
+def do_retrain(base64_img, template_id, label):
+    addData(template_id, base64_img)
+    time.sleep(10)
+    subprocess.Popen("python run_classification.py  --data_dir data \
+                              --model_type layoutlm \
+                              --model_name_or_path models/layoutlm-base-uncased \
+                              --output_dir aetna-trained-model \
+                              --do_lower_case \
+                              --max_seq_length 512 \
+			      --do_train \
+                              --num_train_epochs 40.0 \
+                              --logging_steps 5000 \
+                              --save_steps 5000 \
+                              --per_gpu_train_batch_size 1 \
+                              --per_gpu_eval_batch_size 1 \
+			      --overwrite_output_dir", shell=True)       
+                              
+
 if __name__ == "__main__":
-    do_training('', '')
+    do_retrain("image", "label", "label")
+    # update_version(True)
+
+    

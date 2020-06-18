@@ -214,6 +214,7 @@ dmypy.json
 /output
 /models
 /aetna-trained-model
+/aetna-trained-model-old
 /data
 /layoutlm-base-uncased
 /layoutlm-large-uncased
