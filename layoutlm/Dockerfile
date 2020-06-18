@@ -5,8 +5,8 @@ RUN apt-get update \
     && apt-get autoremove
 COPY . /usr/src/app
 WORKDIR /usr/src/app
-RUN python3 setup.py install
 RUN pip install .
+RUN python3 setup.py install
 EXPOSE 5000
 WORKDIR /usr/src/app/examples/classification
 ENTRYPOINT python3 app.py
