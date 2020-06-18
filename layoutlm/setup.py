@@ -20,7 +20,10 @@ setup(
         "seqeval==0.0.12",
         "Pillow==7.1.2",
         "Flask==1.1.2",
-        "waitress"
+        "waitress",
+        "flask_cors==3.0.8",
+        "pandas"
+
 
     ],
     extras_require={
