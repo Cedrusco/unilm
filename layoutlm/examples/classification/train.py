@@ -167,11 +167,11 @@ def do_retrain(base64_img, template_id, label):
     subprocess.Popen("python run_classification.py  --data_dir data \
                               --model_type layoutlm \
                               --model_name_or_path models/layoutlm-base-uncased \
-                              --output_dir aetna-trained-model \
+                              --output_dir test \
                               --do_lower_case \
                               --max_seq_length 512 \
 			      --do_train \
-                              --num_train_epochs 40.0 \
+                              --num_train_epochs 1.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
                               --per_gpu_train_batch_size 1 \
