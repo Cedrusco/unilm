@@ -1,0 +1,8 @@
+version: '3'
+services:
+  layoutlm-service:
+    build: ./layoutlm
+    ports:
+      - "5000:5000"
+
+      
