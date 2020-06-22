@@ -106,3 +106,4 @@ venv.bak/
 layoutlm/examples/classification/data
 layoutlm/examples/seq_labeling/data
 layoutlm/examples/seq_labeling/layoutlm-base-uncased
+layoutlm/examples/classification/previous-models

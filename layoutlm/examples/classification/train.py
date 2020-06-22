@@ -1,4 +1,4 @@
-import os, uuid, base64, torch, sys
+import os, uuid, base64, torch, sys, shutil
 import time
 import logging
 from examples.classification.predict import convert_hocr_to_feature
@@ -14,6 +14,18 @@ BASE_MODEL_DIR = 'models/layoutlm-base-uncased'
 data_adapter = DataAdapter()
 import subprocess
 import re 
+
+def save_previous():
+    # get version to be taken from adaptor
+    f = open("data/labels/version.txt", "r")
+    text=f.read()
+    version=text.split()[1]
+    prev_model_path = 'previous-models/model_v_'+version
+    MAPPING_DIR = 'mapping.csv'
+    shutil.copytree(LABEL_DIR, os.path.join(prev_model_path, 'labels'))
+    shutil.copy(MAPPING_DIR, prev_model_path)
+    return
+
 
 def addData(template_id,base64_img):
     filename = uuid.uuid4().hex
@@ -32,7 +44,6 @@ def addData(template_id,base64_img):
 def add_trainining_label(filepath, template_id):
     label=get_label(template_id)
     data_adapter.write_training_label(filepath, label)
-
 
 def update_version(id_exists):
     text = data_adapter.get_data_version()
@@ -54,6 +65,7 @@ def update_version(id_exists):
 def do_training(base64_img, template_id):
     subprocess.Popen("cd ../../; python setup.py install", shell=True ).wait()
     template_exists = check_if_exists(template_id)
+    save_previous()
     update_version(template_exists)
     if  (template_exists):
         print('do_training exists ', template_id)
@@ -156,13 +168,12 @@ def do_retrain(base64_img, template_id, label):
                               --do_lower_case \
                               --max_seq_length 512 \
 			      --do_train \
-                              --num_train_epochs 40.0 \
+                              --num_train_epochs 1.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
                               --per_gpu_train_batch_size 1 \
                               --per_gpu_eval_batch_size 1 \
-			      --overwrite_output_dir", shell=True)       
-                              
+			      --overwrite_output_dir", shell=True)                                   
 
 if __name__ == "__main__":
     do_retrain("image", "label", "label")
