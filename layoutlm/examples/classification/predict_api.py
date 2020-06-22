@@ -36,7 +36,6 @@ def predict(base64_img, num_matches):
     for rank, label, prob in matches:
         match = {
             'rank': rank,
-            'label': label,
             'template_id': get_template_id(label),
             'confidence': prob
         }

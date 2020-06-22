@@ -52,6 +52,7 @@ def update_version(id_exists):
         return new_version
 
 def do_training(base64_img, template_id):
+    subprocess.Popen("cd ../../; python setup.py install", shell=True ).wait()
     template_exists = check_if_exists(template_id)
     update_version(template_exists)
     if  (template_exists):
@@ -154,15 +155,13 @@ def do_retrain(base64_img, template_id, label):
                               --output_dir aetna-trained-model \
                               --do_lower_case \
                               --max_seq_length 512 \
-			                  --do_train \
-                              --do_eval \
-                              --do_test \
-                              --num_train_epochs 1.0 \
+			      --do_train \
+                              --num_train_epochs 40.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
-                              --per_gpu_train_batch_size 16 \
-                              --per_gpu_eval_batch_size 16 \
-			                  --overwrite_output_dir", shell=True)       
+                              --per_gpu_train_batch_size 1 \
+                              --per_gpu_eval_batch_size 1 \
+			      --overwrite_output_dir", shell=True)       
                               
 
 if __name__ == "__main__":
