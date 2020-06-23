@@ -167,6 +167,7 @@ def remove_cache():
 
 def do_retrain(base64_img, template_id, label):
     remove_cache()
+    time.sleep(10)
     addData(template_id, base64_img)
     time.sleep(10)
     subprocess.Popen("python run_classification.py  --data_dir data \
