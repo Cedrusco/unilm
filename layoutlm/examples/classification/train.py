@@ -1,4 +1,4 @@
-import os, uuid, base64, torch, sys
+import os, uuid, base64, torch, sys, glob
 import time
 import logging
 from examples.classification.predict import convert_hocr_to_feature
@@ -161,7 +161,13 @@ def save_model(model, tokenizer, output_dir):
     )
     model.to('cpu')
 
+def remove_cache():
+    for filename in glob.glob("data/cached*"):
+        os.remove(filename)
+
 def do_retrain(base64_img, template_id, label):
+    remove_cache()
+    time.sleep(10) 
     addData(template_id, base64_img)
     time.sleep(10)
     subprocess.Popen("python run_classification.py  --data_dir data \
@@ -170,13 +176,13 @@ def do_retrain(base64_img, template_id, label):
                               --output_dir aetna-trained-model \
                               --do_lower_case \
                               --max_seq_length 512 \
-			      --do_train \
+			                  --do_train \
                               --num_train_epochs 40.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
                               --per_gpu_train_batch_size 1 \
                               --per_gpu_eval_batch_size 1 \
-			      --overwrite_output_dir", shell=True)       
+			                  --overwrite_output_dir", shell=True)       
                               
 
 if __name__ == "__main__":
