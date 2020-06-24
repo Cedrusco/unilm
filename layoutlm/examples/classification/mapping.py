@@ -6,6 +6,7 @@ mapping_df = pd.read_csv('mapping.csv')
 
 # Lookup a template ID in mapping.csv and return its corresponding label
 # Expects one argument, template_id - template ID to look up in mapping.csv
+# Returns label of given template ID
 def get_label(template_id):
     row = mapping_df[mapping_df["template_id"] == template_id] 
     label = row["label"].values[0]
@@ -15,6 +16,7 @@ def get_label(template_id):
 
 # Lookup a label in mapping.csv and return its corresponding template ID
 # Expects one argument, label - label to look up in mapping.csv
+# Returns template ID of given label
 def get_template_id(label):
     row = mapping_df[mapping_df["label"] == label] 
     print(row)
@@ -25,6 +27,7 @@ def get_template_id(label):
 
 # Lookup a template ID in mapping.csv and return whether or not it exists (boolean)
 # Expects one argument, template_id - template ID to look up in mapping.csv
+# Returns boolean representing whether or not template_id found in mapping.csv
 def check_if_exists(template_id):
     template_ids = mapping_df["template_id"].values
     exists = template_id in template_ids
@@ -34,6 +37,7 @@ def check_if_exists(template_id):
 
 # Write to mapping.csv and add a new template_id, mapping it to a new label
 # Expects one argument, template_id - template ID to add in mapping.csv
+# Returns corresponding label
 def add_template_id(template_id):
     print(mapping_df)
     label_max = mapping_df['label'].max()
