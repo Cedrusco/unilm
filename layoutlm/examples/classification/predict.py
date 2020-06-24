@@ -5,7 +5,12 @@ from layoutlm.modeling.layoutlm import LayoutlmConfig, LayoutlmForSequenceClassi
 from layoutlm.data.rvl_cdip import CdipProcessor, get_prop, DocExample, convert_examples_to_features
 
 
-# from rvl_cdip.py
+# Converts HOCR format .xml file to DocFeature to be used by the model
+# Initial HOCR -> DocExample code from rvl_cdip.py
+# Expects four arguments, hocr_file - path to HOCR .xml file to convert,
+# tokenizer - tokenizer of loaded model,
+# label_list - list of labels recognized by the model
+# label - label of document, value of parameter not important for prediction
 def convert_hocr_to_feature(hocr_file, tokenizer, label_list, label):
     text_buffer = []
     bbox_buffer = []
@@ -40,6 +45,10 @@ def convert_hocr_to_feature(hocr_file, tokenizer, label_list, label):
     return features[0]
 
 
+# Leverage pretrained model to classify document in HOCR .xml form
+# Expects three arguments, output_path - location of pre-trained model directory,
+# hocr_file - path to HOCR .xml file to predict on
+# num_matches - number of matches returned (top x predictions)
 def make_prediction(output_path, hocr_file, num_matches):
     # config, tokenizer, and model all loaded from output directory
     config = LayoutlmConfig.from_pretrained(output_path)
@@ -95,8 +104,3 @@ def make_prediction(output_path, hocr_file, num_matches):
 if __name__ == "__main__":
     matches = make_prediction('/Users/chris/CODE/cedrus/unilm/layoutlm/examples/classification/aetna_dataset_output_base_40_d3',
                     '/Users/chris/CODE/cedrus/unilm/layoutlm/layoutlm/data/Aetna Dataset -3/OCR/images/COB1/COB1-1.xml', 100)
-    print(matches)
-    #print('>>> Predicted label %s with %s%% confidence' % (label, confidence * 100))
-    #label, confidence = make_prediction(sys.argv[1], sys.argv[2])
-    #head, tail = os.path.split(sys.argv[2])
-    #print('>>> Predicted label %s with %s%% confidence for input file %s' % (label, confidence*100, tail))
