@@ -47,4 +47,4 @@ def train_label():
     return "Training in process!", 202
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True, host='0.0.0.0')
+    app.run(port=6060, debug=True, host='0.0.0.0')

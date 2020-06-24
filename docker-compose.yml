@@ -2,7 +2,8 @@ version: '3'
 services:
   layoutlm-service:
     build: ./layoutlm
-    # volumes:
-    #   - ./layoutlm:/usr/src/app
+    volumes:
+      - ./layoutlm:/usr/src/app
     ports:
       - "5000:5000"
+    container_name: layoutlmVm

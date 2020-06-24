@@ -114,6 +114,7 @@ def cont_train(base64_img, template_id, label):
         optimizer, num_warmup_steps=0, num_training_steps=40
     )
     epoch_count = 40
+    # epoch_count = 1
     model.zero_grad()
 
     for _ in range(epoch_count):
@@ -160,6 +161,7 @@ def save_model(model, tokenizer, output_dir):
         output_dir, do_lower_case=True
     )
     model.to('cpu')
+    print('done')
 
 def do_retrain(base64_img, template_id, label):
     addData(template_id, base64_img)
@@ -167,16 +169,17 @@ def do_retrain(base64_img, template_id, label):
     subprocess.Popen("python run_classification.py  --data_dir data \
                               --model_type layoutlm \
                               --model_name_or_path models/layoutlm-base-uncased \
-                              --output_dir test \
+                              --output_dir aetna-trained-model \
                               --do_lower_case \
                               --max_seq_length 512 \
-			      --do_train \
-                              --num_train_epochs 1.0 \
+			                  --do_train \
+                              --num_train_epochs 10.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
                               --per_gpu_train_batch_size 1 \
                               --per_gpu_eval_batch_size 1 \
-			      --overwrite_output_dir", shell=True)       
+			      --overwrite_output_dir", shell=True)
+    print('done')      
                               
 
 if __name__ == "__main__":
