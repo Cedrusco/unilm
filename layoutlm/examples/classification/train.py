@@ -1,12 +1,13 @@
-import os, uuid, base64, torch, sys, glob
+import os, uuid, base64, torch, glob
 import time
 import logging
 from examples.classification.predict import convert_hocr_to_feature
 from layoutlm.data.convert import convert_img_to_xml
 from layoutlm.modeling.layoutlm import LayoutlmConfig, LayoutlmForSequenceClassification
-from layoutlm.data.rvl_cdip import CdipProcessor, get_prop, DocExample, convert_examples_to_features
+from layoutlm.data.rvl_cdip import CdipProcessor
 from transformers import BertTokenizerFast, AdamW, get_linear_schedule_with_warmup
-from mapping import get_label, check_if_exists, max_label, add_template_id
+from examples.classification.mapping import get_label, check_if_exists, add_template_id
+
 logger = logging.getLogger(__name__)
 MODEL_DIR = 'aetna-trained-model'
 BASE_MODEL_DIR = 'models/layoutlm-base-uncased'
@@ -189,4 +190,3 @@ if __name__ == "__main__":
     do_retrain("image", "label", "label")
     # update_version(True)
 
-    
