@@ -49,9 +49,9 @@ python3 convert-OCR.py "Aetna Dataset -1" (name of dataset directory under layou
 
 The script will run and make consecutive calls to Tesseract, outputting converted .xml files into a new directory `~/out-OCR` within the original dataset directory.
 
-## Fine-tuning Example
+## Local Set up
 
-We evaluate LayoutLM on several document image understanding datasets, and it outperforms several SOTA pre-trained models and approaches.
+Download the following Folder: https://drive.google.com/drive/folders/1JSlK8pUWag27KfQrxwj-Ufugn9FPOkl-
 
 Setup environment as follows:
 
@@ -60,13 +60,13 @@ conda create -n layoutlm python=3.6
 conda activate layoutlm
 ~~~
 ~~~bash
-## If a you are not using a MacOS use these steps
+## Cuda Setup
 conda install pytorch==1.4.0 cudatoolkit=10.1 -c pytorch
 git clone https://github.com/NVIDIA/apex && cd apex
 pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
 ~~~
 ~~~bash
-##If a MacOS is used no need to install cudatoolkit and apex, just install  pytorch.
+## None Cuda Setup
 conda install pytorch==1.4.0 -c pytorch
 ~~~
 ~~~bash
@@ -75,66 +75,6 @@ pip install .
 # pip install -e ".[dev]"
 python3 setup.py install
 ~~~
-
-### Sequence Labeling Task
-
-
-We give a fine-tuning example for sequence labeling tasks. You can run this example on [FUNSD](https://guillaumejaume.github.io/FUNSD/), a dataset for document understanding tasks.
-
-First, we need to preprocess the JSON file into txt. You can run the preprocessing scripts `funsd_preprocess.py` in the `scripts` directory. For more options, please refer to the arguments.
-
-~~~bash
-cd examples/seq_labeling
-./preprocess.sh
-~~~
-
-After preprocessing, run LayoutLM as follows:
-
-~~~bash
-python run_seq_labeling.py  --data_dir data \
-                            --model_type layoutlm \
-                            --model_name_or_path path/to/pretrained/model/directory \
-                            --do_lower_case \
-                            --max_seq_length 512 \
-                            --do_train \
-                            --num_train_epochs 100.0 \
-                            --logging_steps 10 \
-                            --save_steps -1 \
-                            --output_dir path/to/output/directory \
-                            --labels data/labels.txt \
-                            --per_gpu_train_batch_size 16 \
-                            --per_gpu_eval_batch_size 16 \
-                            --fp16
-~~~
-If apex is not installed remove the  `--fp16`  parammeter
-You can download pre-trained model from the links mentioned above (layoutLM or drive)
-Note: The `DataParallel` will be enabled automatically to utilize all GPUs. If you want to train with `DistributedDataParallel`, please run the script like:
-
-~~~bash
-# Suppose you have 4 GPUs. 
-
-python -m torch.distributed.launch --nproc_per_node=4 run_seq_labeling.py  --data_dir data \
-                            --model_type layoutlm \
-                            --model_name_or_path path/to/pretrained/model/directory \
-                            --do_lower_case \
-                            --max_seq_length 512 \
-                            --do_train \
-                            --num_train_epochs 100.0 \
-                            --logging_steps 10 \
-                            --save_steps -1 \
-                            --output_dir path/to/output/directory \
-                            --labels data/labels.txt \
-                            --per_gpu_train_batch_size 16 \
-                            --per_gpu_eval_batch_size 16 \
-                            --fp16
-~~~
-
-
-If apex is not installed remove the  `--fp16`  parammeter
-You can download pre-trained model from the links mentioned above (layoutLM or drive)
-Then you can do evaluation or inference by replacing `--do_train` with `--do_eval` or `--do_predict`
-
-Also, you can run Bert and RoBERTa baseline by modifying the `--model_type` argument. For more options, please refer to the arguments of `run.py`.
 
 ### Document Image Classification Task
 
