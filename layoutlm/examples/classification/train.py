@@ -68,7 +68,7 @@ def update_version(id_exists):
         return new_version
 
 def do_training(base64_img, template_id):
-    subprocess.Popen("cd ../../; python setup.py install", shell=True ).wait()
+    remove_cache()
     template_exists = check_if_exists(template_id)
     update_version(template_exists)
     if  (template_exists):
@@ -113,7 +113,7 @@ def cont_train(base64_img, template_id, label):
     scheduler = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=0, num_training_steps=40
     )
-    epoch_count = 40
+    epoch_count = 1
     model.zero_grad()
 
     for _ in range(epoch_count):
@@ -166,7 +166,6 @@ def remove_cache():
         os.remove(filename)
 
 def do_retrain(base64_img, template_id, label):
-    remove_cache()
     time.sleep(10) 
     addData(template_id, base64_img)
     time.sleep(10)
@@ -177,7 +176,7 @@ def do_retrain(base64_img, template_id, label):
                               --do_lower_case \
                               --max_seq_length 512 \
 			                  --do_train \
-                              --num_train_epochs 40.0 \
+                              --num_train_epochs 1.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
                               --per_gpu_train_batch_size 1 \
