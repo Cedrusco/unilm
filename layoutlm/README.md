@@ -49,9 +49,12 @@ python3 convert-OCR.py "Aetna Dataset -1" (name of dataset directory under layou
 
 The script will run and make consecutive calls to Tesseract, outputting converted .xml files into a new directory `~/out-OCR` within the original dataset directory.
 
-## Local Set up
+## Local Set-Up
 
-Download the following Folder: https://drive.google.com/drive/folders/1JSlK8pUWag27KfQrxwj-Ufugn9FPOkl-
+1- Download the following Folder: https://drive.google.com/drive/folders/1JSlK8pUWag27KfQrxwj-Ufugn9FPOkl-
+2- unzip all
+3- Add all folders under examples/classification
+4- Create a new directory "models" and move layoutlm-base-uncased under it
 
 Setup environment as follows:
 
