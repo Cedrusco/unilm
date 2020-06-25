@@ -113,7 +113,7 @@ def cont_train(base64_img, template_id, label):
     scheduler = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=0, num_training_steps=40
     )
-    epoch_count = 1
+    epoch_count = 40
     model.zero_grad()
 
     for _ in range(epoch_count):
@@ -176,7 +176,7 @@ def do_retrain(base64_img, template_id, label):
                               --do_lower_case \
                               --max_seq_length 512 \
 			                  --do_train \
-                              --num_train_epochs 1.0 \
+                              --num_train_epochs 40.0 \
                               --logging_steps 5000 \
                               --save_steps 5000 \
                               --per_gpu_train_batch_size 1 \
