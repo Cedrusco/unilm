@@ -11,7 +11,7 @@ from lxml import html
 from torch.utils.data import TensorDataset
 from tqdm import tqdm
 from transformers import DataProcessor
-from mapping import max_label
+from examples.classification.mapping import max_label
 
 logger = logging.getLogger(__name__)
 
