@@ -68,7 +68,7 @@ def update_version(id_exists):
         return new_version
 
 def do_training(base64_img, template_id):
-    subprocess.Popen("cd ../../; python setup.py install", shell=True ).wait()
+    remove_cache()
     template_exists = check_if_exists(template_id)
     update_version(template_exists)
     if  (template_exists):
@@ -166,7 +166,6 @@ def remove_cache():
         os.remove(filename)
 
 def do_retrain(base64_img, template_id, label):
-    remove_cache()
     time.sleep(10) 
     addData(template_id, base64_img)
     time.sleep(10)
