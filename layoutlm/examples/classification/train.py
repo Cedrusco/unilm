@@ -1,25 +1,27 @@
-import os, uuid, base64, torch, sys, glob
-import time
-import logging
+import os, uuid, base64, torch, glob, time, logging, subprocess
 from examples.classification.predict import convert_hocr_to_feature
 from layoutlm.data.convert import convert_img_to_xml
 from layoutlm.modeling.layoutlm import LayoutlmConfig, LayoutlmForSequenceClassification
-from layoutlm.data.rvl_cdip import CdipProcessor, get_prop, DocExample, convert_examples_to_features
+from layoutlm.data.rvl_cdip import CdipProcessor
 from transformers import BertTokenizerFast, AdamW, get_linear_schedule_with_warmup
-from mapping import get_label, check_if_exists, max_label, add_template_id
+from examples.classification.mapping import get_label, check_if_exists, add_template_id
+
 logger = logging.getLogger(__name__)
 MODEL_DIR = 'aetna-trained-model'
 BASE_MODEL_DIR = 'models/layoutlm-base-uncased'
 TIFF_DIR = 'data/tiffs'
-XML_DIR= 'data/images'
-LABEL_DIR= 'data/labels'
-import subprocess
+XML_DIR = 'data/images'
+LABEL_DIR = 'data/labels'
 
- 
-def addData(template_id,base64_img):
-    xml_path= os.path.join(XML_DIR,template_id)
-    img_path= os.path.join(TIFF_DIR,template_id)
-    filename = uuid.uuid4().hex
+
+# Decodes & converts image to .xml file, adding file and template ID to train.txt
+# Expects two arguments, template_id - template ID that corresponds to image being added to image.txt,
+# base64_img - base64 image string to convert to .xml and add to dataset
+# Returns filename of outputted .xml file
+def add_data(template_id, base64_img):
+    xml_path = os.path.join(XML_DIR, template_id)
+    img_path = os.path.join(TIFF_DIR, template_id)
+    file_name = uuid.uuid4().hex
     try:
         os.mkdir(img_path)
     except:
@@ -28,65 +30,83 @@ def addData(template_id,base64_img):
         os.mkdir(xml_path)
     except:
         pass
-    img= os.path.join(TIFF_DIR,template_id,f'{filename}.tiff')
+    img = os.path.join(TIFF_DIR, template_id, f'{file_name}.tiff')
     with open(img, 'wb') as file_to_save:
         decoded_image_data = base64.b64decode(base64_img, '-_')
         file_to_save.write(decoded_image_data)
-    convert_img_to_xml(img, xml_path, filename)
-    xml_file=os.path.join(xml_path,f'{filename}.xml')
+    convert_img_to_xml(img, xml_path, file_name)
+    xml_file = os.path.join(xml_path, f'{file_name}.xml')
     print(f'xml file {xml_file}')
-    add_trainining_label(f'{template_id}/{filename}.xml',template_id)
+    add_training_label(f'{template_id}/{file_name}.xml', template_id)
     return xml_file
 
-def add_trainining_label(filepath, template_id):
-    training_labels_file= os.path.join(LABEL_DIR,'train.txt')
-    label=get_label(template_id)
 
+# Adds a template ID/file entry to train.txt
+# Expects two arguments, file_path - path of .xml file to add,
+# template_id - template ID of file to add
+def add_training_label(file_path, template_id):
+    training_labels_file = os.path.join(LABEL_DIR,'train.txt')
+    label = get_label(template_id)
     with open(training_labels_file, 'a+') as file_object:
         file_object.write('\n')
-        file_object.write(f'{filepath} {label}')
+        file_object.write(f'{file_path} {label}')
 
 
+# Update the version of model in version.txt, if template ID exists already, increment 1.0 -> 1.1
+# If template ID does not exist, increment 1.1 -> 2.0
+# Expects one argument, id_exists - boolean designating whether or not template ID exists, returned by check_if_exists()
+# Returns updated version number
 def update_version(id_exists):
     f = open("data/labels/version.txt", "r")
-    text=f.read()
-    version=text.split()
-    model_version, sub_model_version =  version[1].split('.')
-    if (id_exists):
-        new_sub_model_version= int(sub_model_version) + 1
-        new_version= f'{model_version}.{new_sub_model_version}'
-        text= f'version {new_version}'
+    text = f.read()
+    version = text.split()
+    model_version, sub_model_version = version[1].split('.')
+    if id_exists:
+        new_sub_model_version = int(sub_model_version) + 1
+        new_version = f'{model_version}.{new_sub_model_version}'
+        text = f'version {new_version}'
         f = open("data/labels/version.txt", "w")
         f.write(text)
         return new_version
     else:
-        new_model_version= int(model_version) + 1
+        new_model_version = int(model_version) + 1
         new_version = f'{new_model_version}.0'
-        text= f'version {new_version}'
+        text = f'version {new_version}'
         f = open("data/labels/version.txt", "w")
         f.write(text)
         return new_version
 
+
+# Trains the model against a new image and template ID - if template ID doesn't exist, we call do_retrain()
+# Otherwise, we call cont_train()
+# Expects two arguments, base64_img - base64 image to train model against,
+# template_id - template ID of document
 def do_training(base64_img, template_id):
-    subprocess.Popen("cd ../../; python setup.py install", shell=True ).wait()
+    subprocess.Popen("cd ../../; python setup.py install", shell=True).wait()
     template_exists = check_if_exists(template_id)
     update_version(template_exists)
-    if  (template_exists):
+    if template_exists:
         print('do_training exists ', template_id)
-        label=get_label(template_id)
-        return cont_train(base64_img,template_id,label)
+        label = get_label(template_id)
+        return cont_train(base64_img, template_id, label)
     else:
         label = add_template_id(template_id)
         print('do_training does not exists ', template_id)
-        do_retrain(base64_img,template_id,label)
+        do_retrain(base64_img, template_id, label)
 
+
+# Leverages pre-trained model and trains against a new image with recognized template_id,
+# Expects three arguments, base64_img - base64 image to train model against
+# template_id - template ID of document,
+# label - label of document
+# Returns the directory of the newly trained model
 def cont_train(base64_img, template_id, label):
     config = LayoutlmConfig.from_pretrained(MODEL_DIR)
     tokenizer = BertTokenizerFast.from_pretrained(MODEL_DIR)
     model = LayoutlmForSequenceClassification.from_pretrained(MODEL_DIR, config=config)
     processor = CdipProcessor()
     label_list = processor.get_labels()
-    hocr_file = addData(template_id,base64_img)
+    hocr_file = add_data(template_id, base64_img)
     feature = convert_hocr_to_feature(hocr_file, tokenizer, label_list, label)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
@@ -133,8 +153,14 @@ def cont_train(base64_img, template_id, label):
         scheduler.step()
     print('save model')
     save_model(model, tokenizer, MODEL_DIR)
-    return { "trained_model_name": MODEL_DIR}
+    return {"trained_model_name": MODEL_DIR}
 
+
+# Saves a pre-trained model to designated directory, leverages save_pretrained() from modeling_utils.py
+# and save_pretrained() from tokenization_utils.py
+# Expects three arguments, model - pre-trained model to save,
+# tokenizer - pre-trained tokenizer to save,
+# output_dir - directory to save in
 def save_model(model, tokenizer, output_dir):
     output_dir = os.path.join(output_dir)
     if not os.path.exists(output_dir):
@@ -161,14 +187,21 @@ def save_model(model, tokenizer, output_dir):
     )
     model.to('cpu')
 
+
+# Removes cached model file from project directory
 def remove_cache():
     for filename in glob.glob("data/cached*"):
         os.remove(filename)
 
+
+# Leverages base layoutLM model and runs training on entire dataset, including the newly added image
+# Expects three arguments, base64_img - base64 image to train model against
+# template_id - template ID of document
+# label - label of document
 def do_retrain(base64_img, template_id, label):
     remove_cache()
     time.sleep(10) 
-    addData(template_id, base64_img)
+    add_data(template_id, base64_img)
     time.sleep(10)
     subprocess.Popen("python run_classification.py  --data_dir data \
                               --model_type layoutlm \
@@ -189,4 +222,3 @@ if __name__ == "__main__":
     do_retrain("image", "label", "label")
     # update_version(True)
 
-    

@@ -1,16 +1,19 @@
-import os, uuid, pathlib, base64, json
+import os, uuid, base64
 import sys
 ROOT_DIR = os.path.abspath("../../../")
 sys.path.append(ROOT_DIR)
 from layoutlm.data.convert import convert_img_to_xml
 from examples.classification.predict import make_prediction
-from mapping import  get_template_id
+from examples.classification.mapping import  get_template_id
 
 # assumes model exists and is in same directory as this file
 MODEL_DIR = 'aetna-trained-model'
 OUTPUT_DIR = 'output'
 
 
+# Accepts a base64 image and leverages pre-trained model to predict top x labels on the image
+# Expects two arguments, base64_img - base64 encoded image to predict on
+# num_matches - number of matches to return
 def predict(base64_img, num_matches):
     try:
         os.mkdir(OUTPUT_DIR)
@@ -27,8 +30,8 @@ def predict(base64_img, num_matches):
     matches = make_prediction(MODEL_DIR, hocr, num_matches)
     match_array = []
     f = open("data/labels/version.txt", "r")
-    text=f.read()
-    version=text.split()
+    text = f.read()
+    version = text.split()
 
     for rank, label, prob in matches:
         match = {
