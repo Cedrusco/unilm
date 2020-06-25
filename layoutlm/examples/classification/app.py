@@ -1,18 +1,18 @@
 #!flask/bin/python
-import os
+import os, base64, sys
 from flask import Flask, request, jsonify, abort
 from waitress import serve
 from flask_cors import CORS
-import base64
-import binascii
-import sys
-ROOT_DIR = os.path.abspath("../../../")
-sys.path.append(ROOT_DIR)
 from examples.classification.predict_api import predict
 from examples.classification.train import do_training
+from multiprocessing import Process
+
+ROOT_DIR = os.path.abspath("../../../")
+sys.path.append(ROOT_DIR)
+
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
-from multiprocessing import Process
+
 
 @app.route('/predict', methods=['POST'])
 def predict_label():
@@ -28,6 +28,8 @@ def predict_label():
     matches = request.json['numMatches'] if 'numMatches' in request.json else 1
     response = predict(body_img, matches)
     return jsonify(response), 201
+
+
 @app.route('/train', methods=['POST'])
 def train_label():
     if 'testing' in request.json and request.json.get("testing") == True:
@@ -45,6 +47,7 @@ def train_label():
     task_training = Process(target=do_training, args=( body_img, body_template_id))
     task_training.start()
     return "Training in process!", 202
+
 
 if __name__ == '__main__':
     # # debug mode
